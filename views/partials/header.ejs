@@ -1,0 +1,11 @@
+<header>
+  <div>
+    <h1><%= title %></h1>
+    <p>Manage purchases, sales, payments, stock, and capital in one place.</p>
+  </div>
+  <% if (user) { %>
+  <form action="/logout" method="POST">
+    <button class="secondary" type="submit">Logout</button>
+  </form>
+  <% } %>
+</header>

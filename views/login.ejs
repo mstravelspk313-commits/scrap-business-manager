@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Scrap Business Manager</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="auth-wrapper">
+    <div class="card">
+      <h2>Welcome Back</h2>
+      <p>Log in to manage your scrap business.</p>
+      <% if (error) { %>
+        <div class="alert"><%= error %></div>
+      <% } %>
+      <form action="/login" method="POST">
+        <label>Email</label>
+        <input type="email" name="email" required />
+        <label>Password</label>
+        <input type="password" name="password" required />
+        <button type="submit">Login</button>
+      </form>
+      <p style="margin-top: 12px;">
+        No account? <a href="/register">Create one</a>
+      </p>
+    </div>
+  </main>
+</body>
+</html>

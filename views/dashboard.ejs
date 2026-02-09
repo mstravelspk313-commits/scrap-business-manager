@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - Scrap Business Manager</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <% include partials/header.ejs %>
+  <main>
+    <div class="container grid grid-3">
+      <div class="card">
+        <h3>Capital Balance</h3>
+        <p class="badge">PKR</p>
+        <h2><%= capital.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h2>
+        <form action="/capital" method="POST">
+          <label>Update Opening Capital</label>
+          <input type="number" name="initialCapital" step="0.01" value="<%= user.initial_capital %>" />
+          <button class="secondary" type="submit">Save Capital</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Stock Summary (KG)</h3>
+        <% Object.keys(stock).forEach((item) => { %>
+          <div style="display:flex; justify-content:space-between; padding:6px 0;">
+            <span><%= item %></span>
+            <strong><%= stock[item].toFixed(2) %></strong>
+          </div>
+        <% }) %>
+      </div>
+      <div class="card">
+        <h3>Quick Notes</h3>
+        <p>Delete entries when needed, then restore from the same list. Parties are auto-created when you type a new name.</p>
+        <div style="margin-top: 12px;">
+          <span class="badge">Total Parties: <%= parties.length %></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="container grid grid-2">
+      <div class="card">
+        <h3>Add Transaction</h3>
+        <form action="/transactions" method="POST">
+          <label>Type</label>
+          <select name="type" required>
+            <option value="purchase">Purchase (Stock +, Capital -)</option>
+            <option value="sale">Sale (Stock -, Capital +)</option>
+            <option value="payment">Payment (Ledger only)</option>
+          </select>
+          <label>Party Name</label>
+          <input type="text" name="partyName" placeholder="e.g. Ali Traders" />
+          <label>Item Type (for purchase/sale)</label>
+          <select name="itemType">
+            <option value="">Select item</option>
+            <% itemTypes.forEach((item) => { %>
+              <option value="<%= item %>"><%= item %></option>
+            <% }) %>
+          </select>
+          <label>Weight (KG)</label>
+          <input type="number" name="weight" step="0.01" />
+          <label>Amount (PKR)</label>
+          <input type="number" name="amount" step="0.01" required />
+          <label>Payment Direction (for payment type)</label>
+          <select name="paymentDirection">
+            <option value="">Select direction</option>
+            <option value="receive">Receive</option>
+            <option value="pay">Pay</option>
+          </select>
+          <label>Notes</label>
+          <textarea name="notes" placeholder="Add extra details"></textarea>
+          <button type="submit">Save Transaction</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Parties</h3>
+        <p>Click a party to see their separate ledger.</p>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+          <% parties.forEach((party) => { %>
+            <a href="/parties/<%= party.id %>"><%= party.name %></a>
+          <% }) %>
+          <% if (parties.length === 0) { %>
+            <p>No parties yet.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="container card">
+      <h3>All Transactions</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Party</th>
+            <th>Item</th>
+            <th>Weight</th>
+            <th>Amount</th>
+            <th>Notes</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% transactions.forEach((entry) => { %>
+            <tr>
+              <td><%= entry.created_at %></td>
+              <td><span class="badge"><%= entry.type %></span></td>
+              <td><%= entry.party_name || "-" %></td>
+              <td><%= entry.item_type || "-" %></td>
+              <td><%= entry.weight ? Number(entry.weight).toFixed(2) : "-" %></td>
+              <td><%= Number(entry.amount).toFixed(2) %></td>
+              <td><%= entry.notes || "-" %></td>
+              <td>
+                <% if (entry.deleted_at) { %>
+                  <span class="badge" style="background:#fee2e2; color:#991b1b;">Deleted</span>
+                <% } else { %>
+                  <span class="badge" style="background:#dcfce7; color:#166534;">Active</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="inline-actions">
+                  <form action="/transactions/<%= entry.id %>/edit" method="POST">
+                    <input type="hidden" name="type" value="<%= entry.type %>" />
+                    <input type="hidden" name="partyName" value="<%= entry.party_name || "" %>" />
+                    <input type="hidden" name="itemType" value="<%= entry.item_type || "" %>" />
+                    <input type="hidden" name="weight" value="<%= entry.weight || "" %>" />
+                    <input type="hidden" name="amount" value="<%= entry.amount %>" />
+                    <input type="hidden" name="paymentDirection" value="<%= entry.payment_direction || "" %>" />
+                    <input type="hidden" name="notes" value="<%= entry.notes || "" %>" />
+                    <button class="secondary" type="submit">Re-save</button>
+                  </form>
+                  <% if (entry.deleted_at) { %>
+                    <form action="/transactions/<%= entry.id %>/restore" method="POST">
+                      <button class="success" type="submit">Restore</button>
+                    </form>
+                  <% } else { %>
+                    <form action="/transactions/<%= entry.id %>/delete" method="POST">
+                      <button class="danger" type="submit">Delete</button>
+                    </form>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+          <% if (transactions.length === 0) { %>
+            <tr>
+              <td colspan="9">No transactions yet.</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>
